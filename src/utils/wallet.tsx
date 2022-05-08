@@ -1,8 +1,6 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import Wallet from "@project-serum/sol-wallet-adapter";
+import React, { useContext, useEffect, useState } from "react";
+import { PublicKey } from "@solana/web3.js";
 import { notify } from "./notifications";
-import { useConnectionConfig } from "./connection";
-import { useLocalStorageState } from "./utils";
 
 export const WALLET_PROVIDERS = [
   { name: "sollet.io", url: "https://www.sollet.io" },
@@ -12,24 +10,52 @@ export const WALLET_PROVIDERS = [
 
 const WalletContext = React.createContext<any>(null);
 
-export function WalletProvider({ children = null as any }) {
-  const { endpoint } = useConnectionConfig();
-  const [providerUrl, setProviderUrl] = useLocalStorageState(
-    "walletProvider",
-    "https://www.sollet.io"
-  );
-  const wallet = useMemo(() => new Wallet(providerUrl, endpoint), [
-    providerUrl,
-    endpoint,
-  ]);
+type PhantomEvent = "disconnect" | "connect" | "accountChanged";
 
-  const [connected, setConnected] = useState(false);
+interface ConnectOpts {
+  onlyIfTrusted: boolean;
+}
+
+interface PhantomProvider {
+  connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
+  disconnect: ()=>Promise<void>;
+  on: (event: PhantomEvent, callback: (args:any)=>void) => void;
+  isPhantom: boolean;
+}
+
+type WindowWithSolana = Window & {
+  solana?: PhantomProvider;
+}
+
+export function WalletProvider({ children = null as any }) {
+  const [ walletAvail, setWalletAvail ] = useState(false);
+  const [ provider, setProvider ] = useState<PhantomProvider | undefined | null>(undefined);
+  const [ connected, setConnected ] = useState(false);
+  const [ pubKey, setPubKey ] = useState<PublicKey | null>(null);
+
+  useEffect( ()=>{
+    console.log("g834hg845roe");
+
+    if ("solana" in window) {
+        const solWindow = window as WindowWithSolana;
+        if (solWindow?.solana?.isPhantom) {
+            setProvider(solWindow.solana);
+            setWalletAvail(true);
+            // Attemp an eager connection
+            solWindow.solana.connect({ onlyIfTrusted: true });
+        }
+    }
+  }, []);
+
   useEffect(() => {
-    console.log("trying to connect");
-    wallet.on("connect", () => {
-      console.log("connected");
+    console.log("vn76t432oenroe");
+
+    provider?.on("connect", (publicKey: PublicKey)=>{
+      console.log("trying to connect");
       setConnected(true);
-      let walletPublicKey = wallet.publicKey.toBase58();
+      setPubKey(publicKey);
+
+      let walletPublicKey = publicKey.toBase58();
       let keyToDisplay =
         walletPublicKey.length > 20
           ? `${walletPublicKey.substring(0, 7)}.....${walletPublicKey.substring(
@@ -43,28 +69,28 @@ export function WalletProvider({ children = null as any }) {
         description: "Connected to wallet " + keyToDisplay,
       });
     });
-    wallet.on("disconnect", () => {
+    provider?.on("disconnect", ()=>{
+      console.log("disconnect event");
       setConnected(false);
+      // setPubKey(null);
       notify({
         message: "Wallet update",
         description: "Disconnected from wallet",
       });
     });
     return () => {
-      wallet.disconnect();
+      provider?.disconnect();
       setConnected(false);
     };
-  }, [wallet]);
+  }, [provider]);
   return (
     <WalletContext.Provider
       value={{
-        wallet,
         connected,
-        providerUrl,
-        setProviderUrl,
-        providerName:
-          WALLET_PROVIDERS.find(({ url }) => url === providerUrl)?.name ??
-          providerUrl,
+        pubKey,
+        setPubKey,
+        provider,
+        setProvider,
       }}
     >
       {children}
@@ -76,9 +102,9 @@ export function useWallet() {
   const context = useContext(WalletContext);
   return {
     connected: context.connected,
-    wallet: context.wallet,
-    providerUrl: context.providerUrl,
-    setProvider: context.setProviderUrl,
-    providerName: context.providerName,
+    pubKey: context.pubKey,
+    setPubKey: context.setPubKey,
+    provider: context.provider,
+    setProvider: context.setProvider,
   };
 }

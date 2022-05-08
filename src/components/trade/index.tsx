@@ -23,7 +23,7 @@ const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 // Show fee information
 
 export const TradeEntry = () => {
-  const { wallet, connected } = useWallet();
+  const { provider, connected } = useWallet();
   const connection = useConnection();
   const [pendingTx, setPendingTx] = useState(false);
   const { A, B, setLastTypedAccount } = useCurrencyPairState();
@@ -57,7 +57,7 @@ export const TradeEntry = () => {
           },
         ];
 
-        await swap(connection, wallet, components, slippage, pool);
+        await swap(connection, provider, components, slippage, pool);
       } catch {
         notify({
           description:
@@ -112,7 +112,7 @@ export const TradeEntry = () => {
         className="trade-button"
         type="primary"
         size="large"
-        onClick={connected ? handleSwap : wallet.connect}
+        onClick={connected ? handleSwap : provider?.connect}
         style={{ width: "100%" }}
         disabled={
           connected &&

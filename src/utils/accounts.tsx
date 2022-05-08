@@ -152,25 +152,25 @@ function wrapNativeAccount(
 
 const UseNativeAccount = () => {
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const { provider } = useWallet();
 
   const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
   useEffect(() => {
-    if (!connection || !wallet?.publicKey) {
+    if (!connection || !provider?.publicKey) {
       return;
     }
 
-    connection.getAccountInfo(wallet.publicKey).then((acc) => {
+    connection.getAccountInfo(provider.publicKey).then((acc) => {
       if (acc) {
         setNativeAccount(acc);
       }
     });
-    connection.onAccountChange(wallet.publicKey, (acc) => {
+    connection.onAccountChange(provider.publicKey, (acc) => {
       if (acc) {
         setNativeAccount(acc);
       }
     });
-  }, [setNativeAccount, wallet, wallet.publicKey, connection]);
+  }, [setNativeAccount, provider, provider?.PublicKey, connection]);
 
   return { nativeAccount };
 };
@@ -214,7 +214,7 @@ const precacheUserTokenAccounts = async (
 
 export function AccountsProvider({ children = null as any }) {
   const connection = useConnection();
-  const { wallet, connected } = useWallet();
+  const { provider, connected } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
   const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
   const { nativeAccount } = UseNativeAccount();
@@ -222,27 +222,27 @@ export function AccountsProvider({ children = null as any }) {
 
   const selectUserAccounts = useCallback(() => {
     return [...accountsCache.values()].filter(
-      (a) => a.info.owner.toBase58() === wallet.publicKey.toBase58()
+      (a) => a.info.owner.toBase58() === provider.publicKey.toBase58()
     );
-  }, [wallet]);
+  }, [provider]);
 
   useEffect(() => {
     setUserAccounts(
       [
-        wrapNativeAccount(wallet.publicKey, nativeAccount),
+        wrapNativeAccount(provider?.publicKey, nativeAccount),
         ...tokenAccounts,
       ].filter((a) => a !== undefined) as TokenAccount[]
     );
-  }, [nativeAccount, wallet, tokenAccounts]);
+  }, [nativeAccount, provider, tokenAccounts]);
 
   useEffect(() => {
-    if (!connection || !wallet || !wallet.publicKey) {
+    if (!connection || !provider || !provider.publicKey) {
       setTokenAccounts([]);
     } else {
       // cache host accounts to avoid query during swap
       precacheUserTokenAccounts(connection, SWAP_HOST_FEE_ADDRESS);
 
-      precacheUserTokenAccounts(connection, wallet.publicKey).then(() => {
+      precacheUserTokenAccounts(connection, provider.publicKey).then(() => {
         setTokenAccounts(selectUserAccounts());
       });
 
@@ -291,7 +291,7 @@ export function AccountsProvider({ children = null as any }) {
         connection.removeProgramAccountChangeListener(tokenSubID);
       };
     }
-  }, [connection, connected, wallet?.publicKey]);
+  }, [connection, connected, provider?.publicKey]);
 
   return (
     <AccountsContext.Provider

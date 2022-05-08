@@ -69,7 +69,7 @@ const Slippage = (props: {}) => {
 };
 
 export const Settings = () => {
-  const { providerUrl, setProvider } = useWallet();
+  const { provider, setProvider } = useWallet();
   const { endpoint, setEndpoint } = useConnectionConfig();
 
   return (
@@ -97,7 +97,7 @@ export const Settings = () => {
       </div>
       <div style={{ display: "grid" }}>
         Wallet:{" "}
-        <Select onSelect={setProvider} value={providerUrl}>
+        <Select onSelect={setProvider} value={provider}>
           {WALLET_PROVIDERS.map(({ name, url }) => (
             <Select.Option value={url} key={url}>
               {name}

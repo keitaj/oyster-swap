@@ -26,7 +26,7 @@ import {
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
 export const AddToLiquidity = () => {
-  const { wallet, connected } = useWallet();
+  const { provider, connected } = useWallet();
   const connection = useConnection();
   const [pendingTx, setPendingTx] = useState(false);
   const { A, B, setLastTypedAccount } = useCurrencyPairState();
@@ -44,7 +44,7 @@ export const AddToLiquidity = () => {
   });
 
   const executeAction = !connected
-    ? wallet.connect
+    ? provider.connect
     : async () => {
       if (A.account && B.account && A.mint && B.mint) {
         setPendingTx(true);
@@ -61,7 +61,7 @@ export const AddToLiquidity = () => {
           },
         ];
 
-        addLiquidity(connection, wallet, components, slippage, pool, options)
+        addLiquidity(connection, provider, components, slippage, pool, options)
           .then(() => {
             setPendingTx(false);
           })

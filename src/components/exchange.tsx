@@ -9,7 +9,7 @@ import { Settings } from "./settings";
 import { SettingOutlined } from "@ant-design/icons";
 
 export const ExchangeView = (props: {}) => {
-  const { connected, wallet } = useWallet();
+  const { connected, provider } = useWallet();
   const tabStyle: React.CSSProperties = { width: 120 };
   const tabList = [
     {
@@ -29,6 +29,16 @@ export const ExchangeView = (props: {}) => {
   ];
 
   const [activeTab, setActiveTab] = useState(tabList[0].key);
+
+  const connectHandler: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+    console.log(`connect handler`);
+    provider?.connect()
+  }
+
+  const disconnectHandler: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+    console.log("disconnect handler");
+    provider?.disconnect()
+  }
 
   const TopBar = (
     <div className="App-Bar">
@@ -60,7 +70,7 @@ export const ExchangeView = (props: {}) => {
             <Button
               type="text"
               size="large"
-              onClick={connected ? wallet.disconnect : wallet.connect}
+              onClick={connected ? disconnectHandler : connectHandler}
               style={{ color: "#2abdd2" }}
             >
               Connect

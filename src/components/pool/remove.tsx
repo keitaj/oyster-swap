@@ -12,7 +12,7 @@ export const RemoveLiquidity = (props: {
 }) => {
   const { account, pool } = props.instance;
   const [pendingTx, setPendingTx] = useState(false);
-  const { wallet } = useWallet();
+  const { provider } = useWallet();
   const connection = useConnection();
 
   const onRemove = async () => {
@@ -20,7 +20,7 @@ export const RemoveLiquidity = (props: {
       setPendingTx(true);
       // TODO: calculate percentage based on user input
       let liquidityAmount = account.info.amount.toNumber();
-      await removeLiquidity(connection, wallet, liquidityAmount, account, pool);
+      await removeLiquidity(connection, provider, liquidityAmount, account, pool);
     } catch {
       notify({
         description:
